@@ -3,19 +3,19 @@
 
 #include "main.h"
 
-//AVL Assignment 2
+
 class Node
 {
 public:
-	Elem *key;
-	Node *l;
-	Node *r;
+	Elem *data;
+	Node *left;
+	Node *right;
 	int h;
 	Node()
 	{
-		key = NULL;
-		l = NULL;
-		r = NULL;
+		data = NULL;
+		left = NULL;
+		right = NULL;
 		h = 0;
 	}
 };
@@ -32,79 +32,79 @@ int height(Node *x)
 	return x->h;
 }
 
-Node *newNode(Elem *key)
+Node *newNode(Elem *data)
 {
 	Node *node = new Node();
-	node->key = key;
-	node->l = NULL;
-	node->r = NULL;
+	node->data = data;
+	node->left = NULL;
+	node->right = NULL;
 	node->h = 1;
 	return node;
 }
 
 Node *rotateRight(Node *y)
 {
-	Node *x = y->l;
-	Node *z = x->r;
-	x->r = y;
-	y->l = z;
-	y->h = max(height(y->l), height(y->r)) + 1;
-	x->h = max(height(x->l), height(x->r)) + 1;
+	Node *x = y->left;
+	Node *z = x->right;
+	x->right = y;
+	y->left = z;
+	y->h = max(height(y->left), height(y->right)) + 1;
+	x->h = max(height(x->left), height(x->right)) + 1;
 	return x;
 }
 
 Node *rotateLeft(Node *x)
 {
-	Node *y = x->r;
-	Node *z = y->l;
-	y->l = x;
-	x->r = z;
-	x->h = max(height(x->l), height(x->r)) + 1;
-	y->h = max(height(y->l), height(y->r)) + 1;
+	Node *y = x->right;
+	Node *z = y->left;
+	y->left = x;
+	x->right = z;
+	x->h = max(height(x->left), height(x->right)) + 1;
+	y->h = max(height(y->left), height(y->right)) + 1;
 	return y;
 }
 int getBalance(Node *x)
 {
 	if (x == NULL)
 		return 0;
-	return height(x->l) - height(x->r);
+	return height(x->left) - height(x->right);
 }
 
-Node *insertNode(Node *node, Elem *key)
+Node *insertNode(Node *node, Elem *data)
 {
 
 	if (node == NULL)
-		return (newNode(key));
+		return (newNode(data));
 
-	if (key->addr < node->key->addr)
-		node->l = insertNode(node->l, key);
-	else if (key->addr > node->key->addr)
-		node->r = insertNode(node->r, key);
+	if (data->addr < node->data->addr)
+		node->left = insertNode(node->left, data);
+	else if (data->addr > node->data->addr)
+		node->right = insertNode(node->right, data);
 	else
 		return node;
 
-	node->h = 1 + max(height(node->l), height(node->r));
+	node->h = 1 + max(height(node->left), height(node->right));
 	int balance = getBalance(node);
 
 	// Left Left Case
-	if (balance > 1 && key->addr < node->l->key->addr)
+	if (balance > 1 && data->addr < node->left->data->addr)
 		return rotateRight(node);
 
 	// Right Right Case
-	if (balance < -1 && key->addr > node->r->key->addr)
+	if (balance < -1 && data->addr > node->right->data->addr)
 		return rotateLeft(node);
 
 	// Left Right Case
-	if (balance > 1 && key->addr > node->l->key->addr)
+	if (balance > 1 && data->addr > node->left->data->addr)
 	{
-		node->l = rotateLeft(node->l);
+		node->left = rotateLeft(node->left);
 		return rotateRight(node);
 	}
 
 	// Right Left Case
-	if (balance < -1 && key->addr < node->r->key->addr)
+	if (balance < -1 && data->addr < node->right->data->addr)
 	{
-		node->r = rotateRight(node->r);
+		node->right = rotateRight(node->right);
 		return rotateLeft(node);
 	}
 
@@ -113,26 +113,26 @@ Node *insertNode(Node *node, Elem *key)
 
 Node *minValueNode(Node *node)
 {
-	Node *run = node;
-	while (run->l != NULL)
-		run = run->l;
-	return run;
+	Node *cur = node;
+	while (cur->left != NULL)
+		cur = cur->left;
+	return cur;
 }
-Node *deleteNodeAVL(Node *root, int key)
+Node *deleteNodeAVL(Node *root, int data)
 {
 	if (root == NULL)
 		return root;
 
-	if (key < root->key->addr)
-		root->l = deleteNodeAVL(root->l, key);
-	else if (key > root->key->addr)
-		root->r = deleteNodeAVL(root->r, key);
+	if (data < root->data->addr)
+		root->left = deleteNodeAVL(root->left, data);
+	else if (data > root->data->addr)
+		root->right = deleteNodeAVL(root->right, data);
 	else
 	{
-		if ((root->l == NULL) ||
-			(root->r == NULL))
+		if ((root->left == NULL) ||
+			(root->right == NULL))
 		{
-			Node *temp = root->l ? root->l : root->r;
+			Node *temp = root->left ? root->left : root->right;
 
 			if (temp == NULL)
 			{
@@ -145,36 +145,36 @@ Node *deleteNodeAVL(Node *root, int key)
 		}
 		else
 		{
-			Node *temp = minValueNode(root->r);
-			root->key = temp->key;
-			root->r = deleteNodeAVL(root->r, temp->key->addr);
+			Node *temp = minValueNode(root->right);
+			root->data = temp->data;
+			root->right = deleteNodeAVL(root->right, temp->data->addr);
 		}
 	}
 
 	if (root == NULL)
 		return root;
-	root->h = 1 + max(height(root->l), height(root->r));
+	root->h = 1 + max(height(root->left), height(root->right));
 	int balance = getBalance(root);
 
 	// Left Left Case
-	if (balance > 1 && getBalance(root->l) >= 0)
+	if (balance > 1 && getBalance(root->left) >= 0)
 		return rotateRight(root);
 
 	// Left Right Case
-	if (balance > 1 && getBalance(root->l) < 0)
+	if (balance > 1 && getBalance(root->left) < 0)
 	{
-		root->l = rotateLeft(root->l);
+		root->left = rotateLeft(root->left);
 		return rotateRight(root);
 	}
 
 	// Right Right Case
-	if (balance < -1 && getBalance(root->r) <= 0)
+	if (balance < -1 && getBalance(root->right) <= 0)
 		return rotateLeft(root);
 
 	// Right Left Case
-	if (balance < -1 && getBalance(root->r) > 0)
+	if (balance < -1 && getBalance(root->right) > 0)
 	{
-		root->r = rotateRight(root->r);
+		root->right = rotateRight(root->right);
 		return rotateLeft(root);
 	}
 	return root;
@@ -196,12 +196,13 @@ public:
 	virtual ~ReplacementPolicy() {}
 	bool isFull() { return count == MAXSIZE; }
 	bool isEmpty() { return count == 0; }
-	Elem *getValue(int idx)
+	Elem* getValue(int idx)
 	{
 		return arr[idx];
 	}
 	void replace(int idx, Elem *e)
-	{
+	{	
+		
 		access(idx);
 		arr[idx] = e;
 	}
@@ -260,9 +261,9 @@ public:
 class SearchEngine
 {
 public:
-	virtual int search(int key) = 0; // -1 if not found
-	virtual void insert(Elem *key, int idx) = 0;
-	virtual void deleteNode(int key) = 0;
+	virtual int search(int data) = 0; // -1 if not found
+	virtual void insert(Elem *data, int idx) = 0;
+	virtual void deleteNode(int data) = 0;
 	virtual void print(ReplacementPolicy *r) = 0;
 	virtual void write(int add, Data *cont) = 0;
 	virtual ~SearchEngine() {}
@@ -270,7 +271,7 @@ public:
 
 class FIFO : public ReplacementPolicy
 {
-	//Use Queue
+	
 public:
 	int front, rear;
 	int max;
@@ -311,13 +312,13 @@ public:
 	int remove() { return 0; }
 	void print()
 	{
-		int run = this->front;
+		int cur = this->front;
 		int i = 0;
 		while (i < this->count)
 		{
-			this->arr[run]->print();
+			this->arr[cur]->print();
 			i++;
-			run = (run < this->count - 1) ? run + 1 : 0;
+			cur = (cur < this->count - 1) ? cur + 1 : 0;
 		}
 	}
 };
@@ -381,16 +382,16 @@ public:
 	{
 		if (this->count == 0)
 			return;
-		int run = 0;
+		int cur = 0;
 		int run_activity = this->activity;
-		while (run < this->count)
+		while (cur < this->count)
 		{
 			for (int i = 0; i < this->count; i++)
 			{
 				if (this->idx[i] == run_activity)
 				{
 					this->arr[i]->print();
-					run++;
+					cur++;
 					break;
 				}
 			}
@@ -592,15 +593,15 @@ public:
 	{
 		delete status;
 	}
-	void insert(Elem *key, int i)
+	void insert(Elem *data, int i)
 	{
 		i = 0;
 		while (i < this->size)
 		{
-			int idx = (h1(key->addr) + i * h2(key->addr)) % this->size;
+			int idx = (h1(data->addr) + i * h2(data->addr)) % this->size;
 			if (this->status[idx] != NON_EMPTY)
 			{
-				this->hashtable[idx] = key;
+				this->hashtable[idx] = data;
 				this->status[idx] = NON_EMPTY;
 				return;
 			}
@@ -608,13 +609,13 @@ public:
 				i++;
 		}
 	}
-	void deleteNode(int key)
+	void deleteNode(int data)
 	{
 		int i = 0;
 		while (i < this->size)
 		{
-			int idx = (h1(key) + i * h2(key)) % this->size;
-			if (this->hashtable[idx]->addr == key)
+			int idx = (h1(data) + i * h2(data)) % this->size;
+			if (this->hashtable[idx]->addr == data)
 			{
 				this->status[idx] = DELETED;
 				return;
@@ -649,7 +650,7 @@ public:
 				hashtable[i]->print();
 		}
 	}
-	int search(int key) { return 0; }
+	int search(int data) { return 0; }
 };
 
 class AVL : public SearchEngine
@@ -665,60 +666,60 @@ public:
 	{
 		delete root;
 	}
-	void insert(Elem *key, int i)
+	void insert(Elem *data, int i)
 	{
-		root = insertNode(root, key);
+		root = insertNode(root, data);
 	}
-	void deleteNode(int key)
+	void deleteNode(int data)
 	{
-		root = deleteNodeAVL(root, key);
+		root = deleteNodeAVL(root, data);
 	}
 	void print(ReplacementPolicy *q)
 	{
 		cout << "Print AVL in inorder:\n";
-		printInOrder(this->root);
+		inOrder(this->root);
 		cout << "Print AVL in preorder:\n";
-		printPreOrder(this->root);
+		preOrder(this->root);
 	}
 	void write(int addr, Data *cont)
 	{
-		Node *run = this->root;
-		while (run != NULL)
+		Node *cur = this->root;
+		while (cur != NULL)
 		{
-			if (run->key->addr == addr)
+			if (cur->data->addr == addr)
 			{
-				run->key->data = cont;
-				run->key->sync = false;
+				cur->data->data = cont;
+				cur->data->sync = false;
 				break;
 			}
-			else if (run->key->addr > addr)
+			else if (cur->data->addr > addr)
 			{
-				run = run->l;
+				cur = cur->left;
 			}
 			else
-				run = run->r;
+				cur = cur->right;
 		}
 	}
-	int search(int key)
+	int search(int data)
 	{
 		return 0;
 	}
-	void printInOrder(Node *x)
+	void inOrder(Node *x)
 	{
 		if (x != NULL)
 		{
-			printInOrder(x->l);
-			x->key->print();
-			printInOrder(x->r);
+			inOrder(x->left);
+			x->data->print();
+			inOrder(x->right);
 		}
 	}
-	void printPreOrder(Node *x)
+	void preOrder(Node *x)
 	{
 		if (x != NULL)
 		{
-			x->key->print();
-			printPreOrder(x->l);
-			printPreOrder(x->r);
+			x->data->print();
+			preOrder(x->left);
+			preOrder(x->right);
 		}
 	}
 };
