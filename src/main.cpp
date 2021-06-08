@@ -46,7 +46,6 @@ void simulate(string filename)
     	string code,tmp;
     	ss >> code;
     	int addr;
-
     	switch (code[0]) {
 			case 'M': //MAXSIZE
 				ss >> addr;
@@ -83,16 +82,20 @@ void simulate(string filename)
     			} else {
 					cout << res->getValue() << endl;
 				}
+				
     			break;
         	case 'U': //put
                 ss >> addr;
                 ss >> tmp;
                 c->put(addr,getData(tmp));
+				
                 break;
     		case 'W': //write
                 ss >> addr;
     			ss >> tmp;
+
     			c->write(addr,getData(tmp));
+				
     			break;
     		case 'P': // print
     			cout << "Print replacement buffer\n";
@@ -107,10 +110,10 @@ void simulate(string filename)
 	delete c;
 }
 int main(int argc, char* argv[]) {
-	if (argc < 2)
-    	return 1;
-  	const char *fileName = argv[1];
-    simulate(string(fileName));
+	// if (argc < 2)
+    // 	return 1;
+  	// const char *fileName = argv[1];
+    simulate("test3.txt");
 	return 0;
 }
 
