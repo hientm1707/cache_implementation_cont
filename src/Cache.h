@@ -3,78 +3,82 @@
 
 #include "main.h"
 
-
 class Node
 {
 public:
 	Elem *data;
 	Node *left;
 	Node *right;
-	int h;
-	Node()
+	int height;
+	Node(Elem *data)
 	{
-		data = NULL;
-		left = NULL;
-		right = NULL;
-		h = 0;
+		this->data = data;
+		this->left = NULL;
+		this->right = NULL;
+		this->height = 1;
 	}
 };
 
+int height(Node *N)
+{
+	if (N == NULL)
+		return 0;
+	return N->height;
+}
+
 int max(int a, int b)
 {
-	return (a < b) ? b : a;
+	return (a > b) ? a : b;
 }
 
-int height(Node *x)
-{
-	if (x == NULL)
-		return 0;
-	return x->h;
-}
-
-Node *newNode(Elem *data)
-{
-	Node *node = new Node();
-	node->data = data;
-	node->left = NULL;
-	node->right = NULL;
-	node->h = 1;
-	return node;
-}
-
-Node *rotateRight(Node *y)
+Node *rightRotate(Node *y)
 {
 	Node *x = y->left;
-	Node *z = x->right;
+	Node *T2 = x->right;
+
 	x->right = y;
-	y->left = z;
-	y->h = max(height(y->left), height(y->right)) + 1;
-	x->h = max(height(x->left), height(x->right)) + 1;
+	y->left = T2;
+
+	y->height = max(height(y->left),
+					height(y->right)) +
+				1;
+	x->height = max(height(x->left),
+					height(x->right)) +
+				1;
+
 	return x;
 }
 
-Node *rotateLeft(Node *x)
+Node *leftRotate(Node *x)
 {
 	Node *y = x->right;
-	Node *z = y->left;
+	Node *T2 = y->left;
+
 	y->left = x;
-	x->right = z;
-	x->h = max(height(x->left), height(x->right)) + 1;
-	y->h = max(height(y->left), height(y->right)) + 1;
+	x->right = T2;
+
+	x->height = max(height(x->left),
+					height(x->right)) +
+				1;
+	y->height = max(height(y->left),
+					height(y->right)) +
+				1;
+
 	return y;
 }
-int getBalance(Node *x)
+
+int getBalance(Node *N)
 {
-	if (x == NULL)
+	if (N == NULL)
 		return 0;
-	return height(x->left) - height(x->right);
+	return height(N->left) - height(N->right);
 }
 
 Node *insertNode(Node *node, Elem *data)
 {
 
 	if (node == NULL)
-		return (newNode(data));
+		return (new Node(data));
 
 	if (data->addr < node->data->addr)
 		node->left = insertNode(node->left, data);
@@ -83,29 +87,27 @@ Node *insertNode(Node *node, Elem *data)
 	else
 		return node;
 
-	node->h = 1 + max(height(node->left), height(node->right));
+	node->height = 1 + max(height(node->left),
+						   height(node->right));
+
 	int balance = getBalance(node);
 
-	// Left Left Case
 	if (balance > 1 && data->addr < node->left->data->addr)
-		return rotateRight(node);
+		return rightRotate(node);
 
-	// Right Right Case
 	if (balance < -1 && data->addr > node->right->data->addr)
-		return rotateLeft(node);
+		return leftRotate(node);
 
-	// Left Right Case
 	if (balance > 1 && data->addr > node->left->data->addr)
 	{
-		node->left = rotateLeft(node->left);
-		return rotateRight(node);
+		node->left = leftRotate(node->left);
+		return rightRotate(node);
 	}
 
-	// Right Left Case
 	if (balance < -1 && data->addr < node->right->data->addr)
 	{
-		node->right = rotateRight(node->right);
-		return rotateLeft(node);
+		node->right = rightRotate(node->right);
+		return leftRotate(node);
 	}
 
 	return node;
@@ -113,11 +115,14 @@ Node *insertNode(Node *node, Elem *data)
 
 Node *minValueNode(Node *node)
 {
-	Node *cur = node;
-	while (cur->left != NULL)
-		cur = cur->left;
-	return cur;
+	Node *current = node;
+
+	while (current->left != NULL)
+		current = current->left;
+
+	return current;
 }
+
 Node *deleteNodeAVL(Node *root, int data)
 {
 	if (root == NULL)
@@ -153,69 +158,69 @@ Node *deleteNodeAVL(Node *root, int data)
 
 	if (root == NULL)
 		return root;
-	root->h = 1 + max(height(root->left), height(root->right));
+	root->height = 1 + max(height(root->left), height(root->right));
 	int balance = getBalance(root);
 
-	// Left Left Case
-	if (balance > 1 && getBalance(root->left) >= 0)
-		return rotateRight(root);
-
-	// Left Right Case
-	if (balance > 1 && getBalance(root->left) < 0)
-	{
-		root->left = rotateLeft(root->left);
-		return rotateRight(root);
-	}
-
-	// Right Right Case
-	if (balance < -1 && getBalance(root->right) <= 0)
-		return rotateLeft(root);
-
-	// Right Left Case
 	if (balance < -1 && getBalance(root->right) > 0)
 	{
-		root->right = rotateRight(root->right);
-		return rotateLeft(root);
+		root->right = rightRotate(root->right);
+		return leftRotate(root);
 	}
 	return root;
+
+	if (balance < -1 && getBalance(root->right) <= 0)
+		return leftRotate(root);
+
+	if (balance > 1 && getBalance(root->left) < 0)
+	{
+		root->left = leftRotate(root->left);
+		return rightRotate(root);
+	}
+
+	if (balance > 1 && getBalance(root->left) >= 0)
+		return rightRotate(root);
 }
 
-//Ass3 Begin
+enum STT_TYPES
+{
+	NIL,
+	UN_EMPTY,
+	DELETED
+};
+
 class ReplacementPolicy
 {
 protected:
 	int count;
-	Elem **arr;
+	Elem **slot;
 
 public:
-	virtual Elem *insert(Elem *e, int idx) { return NULL; }; //insert e into arr[idx] if idx != -1 else into the position by replacement policy
-	virtual void access(int idx) = 0;						 //idx is index in the cache of the accessed element
-	virtual void access(Elem *e) = 0;
+	virtual Elem *insert(Elem *e, int idx) = 0;
+	virtual void proceed(int idx) = 0;
+	virtual void proceed(Elem *e) = 0;
 	virtual int remove() = 0;
 	virtual void print() = 0;
 	virtual ~ReplacementPolicy() {}
-	bool isFull() { return count == MAXSIZE; }
-	bool isEmpty() { return count == 0; }
-	Elem* getValue(int idx)
+	bool full()
 	{
-		return arr[idx];
+		return (this->count == MAXSIZE);
 	}
+
 	void replace(int idx, Elem *e)
-	{	
-		
-		access(idx);
-		arr[idx] = e;
+	{
+		proceed(idx);
+		slot[idx] = e;
 	}
 
 	Data *read(int addr)
 	{
 		for (int i = 0; i < this->count; i++)
 		{
-			if (this->arr[i]->addr == addr)
+			if (this->slot[i]->addr == addr)
 			{
-				Data *ret = this->arr[i]->data;
-				Elem *e = new Elem(addr, NULL, true);
-				this->access(e);
+				Data *ret = this->slot[i]->data;
+
+				this->proceed(new Elem(addr, NULL, true));
 				return ret;
 			}
 		}
@@ -231,107 +236,102 @@ public:
 		return e;
 	}
 
-	Elem *write(int addr, Data *cont, bool &overwrite)
+	Elem *write(int addr, Data *cont, bool &duplicated)
 	{
 		bool found = false;
 		for (int i = 0; i < this->count; i++)
 		{
-			if (this->arr[i]->addr == addr)
+			if (this->slot[i]->addr == addr)
 			{
-				this->arr[i]->data = cont;
-				this->arr[i]->sync = false;
-				overwrite = true;
+				this->slot[i]->data = cont;
+				this->slot[i]->sync = false;
+				duplicated = true;
 				found = true;
 				break;
 			}
 		}
-		Elem *ret = NULL;
+
 		if (!found)
 		{
-			Elem *pNew = new Elem(addr, cont, false);
-			pNew = insert(pNew, 0);
-			if (pNew != NULL)
-				pNew->sync = true;
-			ret = pNew;
+			Elem *newElem = new Elem(addr, cont, false);
+			newElem = insert(newElem, 0);
+			if (newElem != NULL)
+				newElem->sync = true;
+			return newElem;
 		}
-		return ret;
+		return NULL;
 	}
-};
-
-class SearchEngine
-{
-public:
-	virtual int search(int data) = 0; // -1 if not found
-	virtual void insert(Elem *data, int idx) = 0;
-	virtual void deleteNode(int data) = 0;
-	virtual void print(ReplacementPolicy *r) = 0;
-	virtual void write(int add, Data *cont) = 0;
-	virtual ~SearchEngine() {}
 };
 
 class FIFO : public ReplacementPolicy
 {
-	
-public:
+
+private:
 	int front, rear;
-	int max;
+public:
 	FIFO()
 	{
-		count = 0;
-		arr = new Elem *[MAXSIZE];
-		this->max = MAXSIZE;
 		this->front = 0;
-		this->rear = this->max - 1;
+		this->rear = MAXSIZE - 1;
+		this->count = 0;
+		this->slot = new Elem *[MAXSIZE];
+		
+		
 	}
-	~FIFO() {}
 	Elem *insert(Elem *e, int idx)
 	{
-		Elem *ret;
-		if (isFull())
+
+		if (this->full())
 		{
-			ret = this->arr[this->front];
-			this->arr[this->front] = e;
-			this->front = (this->front + 1) % this->max;
+			Elem *ret;
+			ret = this->slot[this->front];
+			this->slot[this->front] = e;
+			this->front = (this->front + 1) % MAXSIZE;
+			return ret;
 		}
 		else
 		{
-			this->rear = (this->rear + 1) % this->max;
-			this->arr[this->rear] = e;
+			this->rear = (this->rear + 1) % MAXSIZE;
+			this->slot[this->rear] = e;
 			this->count++;
-			ret = NULL;
+			return NULL;
 		}
-		return ret;
 	}
 
-	void access(int idx)
+	int remove()
 	{
+		return 0;
 	}
-	void access(Elem *e)
-	{
-	}
-	int remove() { return 0; }
 	void print()
 	{
 		int cur = this->front;
-		int i = 0;
-		while (i < this->count)
+
+		for(int i = 0; i<this->count;i++)
 		{
-			this->arr[cur]->print();
-			i++;
+			this->slot[cur]->print();
 			cur = (cur < this->count - 1) ? cur + 1 : 0;
 		}
+	}
+
+
+	void proceed(int idx)
+	{
+	}
+	void proceed(Elem *e)
+	{
 	}
 };
 
 class MRU : public ReplacementPolicy
 {
-public:
+protected:
 	int activity;
 	int *idx;
+public:
 	MRU()
 	{
 		count = 0;
-		arr = new Elem *[MAXSIZE];
+		slot = new Elem *[MAXSIZE];
 		activity = 0;
 		idx = new int[MAXSIZE];
 		for (int i = 0; i < MAXSIZE; i++)
@@ -344,10 +344,10 @@ public:
 	Elem *insert(Elem *e, int idx)
 	{
 		Elem *ret;
-		if (isFull())
+		if (this->full())
 		{
 			int re = remove();
-			ret = this->arr[re];
+			ret = this->slot[re];
 			this->replace(re, e);
 		}
 		else
@@ -358,16 +358,16 @@ public:
 		}
 		return ret;
 	}
-	void access(int idx)
+	void proceed(int idx)
 	{
 		this->idx[idx] = ++activity;
 	}
-	void access(Elem *e)
+	void proceed(Elem *ele)
 	{
 		for (int i = 0; i < this->count; i++)
-			if (this->arr[i]->addr == e->addr)
+			if (ele->addr == this->slot[i]->addr  )
 			{
-				access(i);
+				proceed(i);
 				break;
 			}
 	}
@@ -390,7 +390,7 @@ public:
 			{
 				if (this->idx[i] == run_activity)
 				{
-					this->arr[i]->print();
+					this->slot[i]->print();
 					cur++;
 					break;
 				}
@@ -414,42 +414,43 @@ public:
 
 class LFU : public ReplacementPolicy
 {
-public:
-	int *freq;
+private:
+	int *frequency;
 	int *idx;
 	int activity;
+public:
 	LFU()
 	{
 		count = 0;
-		arr = new Elem *[MAXSIZE];
-		freq = new int[MAXSIZE];
+		slot = new Elem *[MAXSIZE];
+		frequency = new int[MAXSIZE];
 		idx = new int[MAXSIZE];
 		activity = 0;
 		for (int i = 0; i < MAXSIZE; i++)
 		{
-			freq[i] = 0;
+			frequency[i] = 0;
 			idx[i] = 0;
 		}
 	}
 	~LFU()
 	{
-		delete freq;
+		delete frequency;
 		delete idx;
 	}
 	Elem *insert(Elem *e, int idx)
 	{
 		Elem *ret;
-		if (isFull())
+		if (full())
 		{
 			int re = remove();
-			ret = this->arr[re];
-			this->arr[re] = this->arr[this->count - 1];
-			this->freq[re] = this->freq[this->count - 1];
+			ret = this->slot[re];
+			this->slot[re] = this->slot[this->count - 1];
+			this->frequency[re] = this->frequency[this->count - 1];
 			this->count--;
 			reheapDown(re);
 			this->count++;
 			replace(this->count - 1, e);
-			this->freq[this->count - 1] = 1;
+			this->frequency[this->count - 1] = 1;
 			reheapUp(this->count - 1);
 		}
 		else
@@ -461,17 +462,17 @@ public:
 		}
 		return ret;
 	}
-	void access(int idx)
+	void proceed(int idx)
 	{
-		this->freq[idx]++;
+		this->frequency[idx]++;
 		this->idx[idx] = ++activity;
 	}
-	void access(Elem *e)
+	void proceed(Elem *e)
 	{
 		for (int i = 0; i < this->count; i++)
-			if (this->arr[i]->addr == e->addr)
+			if (this->slot[i]->addr == e->addr)
 			{
-				access(i);
+				proceed(i);
 				reheapDown(i);
 				break;
 			}
@@ -483,12 +484,12 @@ public:
 	void print()
 	{
 		for (int i = 0; i < this->count; i++)
-			this->arr[i]->print();
+			this->slot[i]->print();
 	}
 	void reheapDown(int index)
 	{
-		int item = freq[index];
-		Elem *_item = this->arr[index];
+		int item = frequency[index];
+		Elem *_item = this->slot[index];
 		int i = index;
 		int u = 0;
 		int k;
@@ -497,38 +498,38 @@ public:
 		while (2 * i + 1 < this->count)
 		{
 			u = 2 * i + 1;
-			k = freq[u];
-			_k = this->arr[u];
+			k = frequency[u];
+			_k = this->slot[u];
 			if (2 * i + 2 < this->count)
 			{
-				if (k > freq[u + 1])
-					k = freq[++u];
-				_k = this->arr[u];
+				if (k > frequency[u + 1])
+					k = frequency[++u];
+				_k = this->slot[u];
 			}
 			if (item < k)
 			{
-				freq[i] = item;
-				this->arr[i] = _item;
+				frequency[i] = item;
+				this->slot[i] = _item;
 				check = true;
 				break;
 			}
 			else
 			{
-				freq[i] = k;
-				this->arr[i] = _k;
+				frequency[i] = k;
+				this->slot[i] = _k;
 				i = u;
 			}
 		}
 		if (!check)
 		{
-			freq[i] = item;
-			this->arr[i] = _item;
+			frequency[i] = item;
+			this->slot[i] = _item;
 		}
 	}
 	void reheapUp(int index)
 	{
-		int item = freq[index];
-		Elem *_item = this->arr[index];
+		int item = frequency[index];
+		Elem *_item = this->slot[index];
 		int i = index;
 		int k;
 		Elem *_k;
@@ -536,56 +537,60 @@ public:
 		bool check = false;
 		while (u >= 0)
 		{
-			k = freq[u];
-			_k = this->arr[u];
+			k = frequency[u];
+			_k = this->slot[u];
 			if (item >= k)
 			{
-				freq[i] = item;
-				this->arr[i] = _item;
+				frequency[i] = item;
+				this->slot[i] = _item;
 				check = true;
 				break;
 			}
 			else
 			{
-				freq[i] = k;
-				this->arr[i] = _k;
+				frequency[i] = k;
+				this->slot[i] = _k;
 				i = u;
 			}
 			u = (i % 2 == 0) ? (i / 2 - 1) : i / 2;
 		}
 		if (!check)
 		{
-			freq[i] = item;
-			this->arr[i] = _item;
+			frequency[i] = item;
+			this->slot[i] = _item;
 		}
 	}
 };
-enum STATUS_TYPE
+
+class SearchEngine
 {
-	NIL,
-	NON_EMPTY,
-	DELETED
+public:
+	virtual int search(int data) = 0; // -1 if not found
+	virtual void insert(Elem *data, int idx) = 0;
+	virtual void deleteNode(int data) = 0;
+	virtual void print(ReplacementPolicy *r) = 0;
+	virtual void write(int add, Data *cont) = 0;
+	virtual ~SearchEngine() {}
 };
+
 class DBHashing : public SearchEngine
 {
 	int (*h1)(int);
 	int (*h2)(int);
 	int size;
-	STATUS_TYPE *status;
-
-	Elem **hashtable;
-
+	STT_TYPES *status;
+	Elem ** map;
 public:
 	DBHashing(int (*h1)(int), int (*h2)(int), int s)
 	{
 		this->h1 = h1;
 		this->h2 = h2;
 		this->size = s;
-		this->status = new STATUS_TYPE[size];
-		hashtable = new Elem *[s];
+		this->status = new STT_TYPES[size];
+		map = new Elem *[s];
 		for (int i = 0; i < s; i++)
 		{
-			hashtable[i] = NULL;
+			map[i] = NULL;
 			this->status[i] = NIL;
 		}
 	}
@@ -599,10 +604,10 @@ public:
 		while (i < this->size)
 		{
 			int idx = (h1(data->addr) + i * h2(data->addr)) % this->size;
-			if (this->status[idx] != NON_EMPTY)
+			if (this->status[idx] != UN_EMPTY)
 			{
-				this->hashtable[idx] = data;
-				this->status[idx] = NON_EMPTY;
+				this->map[idx] = data;
+				this->status[idx] = UN_EMPTY;
 				return;
 			}
 			else
@@ -615,15 +620,13 @@ public:
 		while (i < this->size)
 		{
 			int idx = (h1(data) + i * h2(data)) % this->size;
-			if (this->hashtable[idx]->addr == data)
+			if (this->map[idx]->addr == data)
 			{
 				this->status[idx] = DELETED;
 				return;
 			}
 			else if (this->status[idx] != NIL)
-			{
 				return;
-			}
 			else
 				i++;
 		}
@@ -632,11 +635,11 @@ public:
 	{
 		for (int i = 0; i < this->size; i++)
 		{
-			if (this->status[i] == NON_EMPTY)
-				if (hashtable[i]->addr == addr)
+			if (this->status[i] == UN_EMPTY)
+				if (map[i]->addr == addr)
 				{
-					hashtable[i]->data = cont;
-					hashtable[i]->sync = false;
+					map[i]->data = cont;
+					map[i]->sync = false;
 					break;
 				}
 		}
@@ -646,8 +649,8 @@ public:
 		cout << "Prime memory:" << endl;
 		for (int i = 0; i < this->size; i++)
 		{
-			if (this->status[i] == NON_EMPTY)
-				hashtable[i]->print();
+			if (this->status[i] == UN_EMPTY)
+				map[i]->print();
 		}
 	}
 	int search(int data) { return 0; }
@@ -660,7 +663,7 @@ class AVL : public SearchEngine
 public:
 	AVL()
 	{
-		root = NULL;
+		this->root = NULL;
 	}
 	~AVL()
 	{
@@ -668,7 +671,7 @@ public:
 	}
 	void insert(Elem *data, int i)
 	{
-		root = insertNode(root, data);
+		this->root = insertNode(this->root, data);
 	}
 	void deleteNode(int data)
 	{
@@ -676,9 +679,9 @@ public:
 	}
 	void print(ReplacementPolicy *q)
 	{
-		cout << "Print AVL in inorder:\n";
+		cout << "Print AVL in inorder:" << endl;
 		inOrder(this->root);
-		cout << "Print AVL in preorder:\n";
+		cout << "Print AVL in preorder:" << endl;
 		preOrder(this->root);
 	}
 	void write(int addr, Data *cont)
@@ -693,9 +696,8 @@ public:
 				break;
 			}
 			else if (cur->data->addr > addr)
-			{
 				cur = cur->left;
-			}
+
 			else
 				cur = cur->right;
 		}
@@ -704,23 +706,21 @@ public:
 	{
 		return 0;
 	}
-	void inOrder(Node *x)
+	void inOrder(Node *node)
 	{
-		if (x != NULL)
-		{
-			inOrder(x->left);
-			x->data->print();
-			inOrder(x->right);
-		}
+		if (node == NULL)
+			return;
+		inOrder(node->left);
+		node->data->print();
+		inOrder(node->right);
 	}
-	void preOrder(Node *x)
+	void preOrder(Node *node)
 	{
-		if (x != NULL)
-		{
-			x->data->print();
-			preOrder(x->left);
-			preOrder(x->right);
-		}
+		if (node == NULL)
+			return;
+		node->data->print();
+		preOrder(node->left);
+		preOrder(node->right);
 	}
 };
 

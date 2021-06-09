@@ -1,6 +1,11 @@
 #include "main.h"
 
-Cache::Cache(SearchEngine *s, ReplacementPolicy *r) : rp(r), s_engine(s) {}
+Cache::Cache(SearchEngine *s, ReplacementPolicy *r)
+{
+
+    this->rp = r;
+    this->s_engine = s;
+}
 Cache::~Cache()
 {
     delete rp;
@@ -12,30 +17,30 @@ Data *Cache::read(int addr)
 }
 Elem *Cache::put(int addr, Data *cont)
 {
-    Elem *pNew = new Elem(addr, cont, true);
-    Elem *ret = rp->put(addr, cont);
-    if (ret != NULL)
-        this->s_engine->deleteNode(ret->addr);
-    this->s_engine->insert(pNew, 0);
-    return ret;
+    
+    Elem *retValue = rp->put(addr, cont);
+    if (retValue != NULL)
+        this->s_engine->deleteNode(retValue->addr);
+    this->s_engine->insert(new Elem(addr, cont, true), 0);
+    return retValue;
 }
 Elem *Cache::write(int addr, Data *cont)
 {
-    bool overwrite = false;
-    Elem *pNew = new Elem(addr, cont, false);
-    Elem *ret = rp->write(addr, cont, overwrite);
-    if (overwrite)
+    bool duplicated = false;
+    Elem *newElem = new Elem(addr, cont, false);
+    Elem *retValue = rp->write(addr, cont, duplicated);
+    if (duplicated)
     {
         s_engine->write(addr, cont);
-        rp->access(pNew);
+        rp->proceed(newElem);
     }
     else
     {
-        if (ret != NULL)
-            this->s_engine->deleteNode(ret->addr);
-        this->s_engine->insert(pNew, 0);
+        if (retValue != NULL)
+            this->s_engine->deleteNode(retValue->addr);
+        this->s_engine->insert(newElem, 0);
     }
-    return ret;
+    return retValue;
 }
 void Cache::printRP()
 {
