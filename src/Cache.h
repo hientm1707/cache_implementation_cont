@@ -181,8 +181,6 @@ Node *deleteNodeAVL(Node *root, int data)
 		return rightRotate(root);
 }
 
-
-
 class ReplacementPolicy
 {
 protected:
@@ -420,7 +418,7 @@ public:
 		this->index = new int[MAXSIZE];
 		this->counter = 0;
 		for (int i = 0; i < MAXSIZE; i++)
-		{	
+		{
 			index[i] = 0;
 			frequency[i] = 0;
 		}
@@ -437,14 +435,15 @@ public:
 	}
 	void visit(int index)
 	{
-		this->frequency[index] =  this->frequency[index]+1;
-		this->index[index] = counter+1;
+		this->frequency[index] = this->frequency[index] + 1;
+		this->index[index] = counter + 1;
 		this->counter++;
 	}
 	Elem *insert(Elem *e, int index)
 	{
 		if (full())
-		{	Elem *ret;
+		{
+			Elem *ret;
 			int removeIndex = this->remove();
 			ret = this->slot[removeIndex];
 			slot[removeIndex] = this->slot[this->size - 1];
@@ -491,75 +490,76 @@ public:
 	void downHeap(int index)
 	{
 		int item = frequency[index];
-		Elem *_item = this->slot[index];
+		Elem *_elem = this->slot[index];
 		int i = index;
-		int u = 0;
-		int k;
-		Elem *_k;
+		int freq;
+		Elem *temp;
+
 		bool check = false;
 		while (2 * i + 1 < this->size)
 		{
-			u = 2 * i + 1;
-			k = frequency[u];
-			_k = this->slot[u];
+			int leftChild = 2 * i + 1;
+			freq = frequency[leftChild];
+			temp = this->slot[leftChild];
 			if (2 * i + 2 < this->size)
 			{
-				if (k > frequency[u + 1])
-					k = frequency[++u];
-				_k = this->slot[u];
+				if (freq > frequency[leftChild + 1])
+					freq = frequency[++leftChild];
+				temp = this->slot[leftChild];
 			}
-			if (item < k)
+			if (item < freq)
 			{
-				frequency[i] = item;
-				this->slot[i] = _item;
 				check = true;
+				frequency[i] = item;
+				this->slot[i] = _elem;
+
 				break;
 			}
 			else
 			{
-				frequency[i] = k;
-				this->slot[i] = _k;
-				i = u;
+				frequency[i] = freq;
+				this->slot[i] = temp;
+				i = leftChild;
 			}
 		}
 		if (!check)
 		{
 			frequency[i] = item;
-			this->slot[i] = _item;
+			this->slot[i] = _elem;
 		}
 	}
 	void upHeap(int index)
 	{
 		int item = frequency[index];
-		Elem *_item = this->slot[index];
+		Elem *_elem = this->slot[index];
 		int i = index;
-		int k;
-		Elem *_k;
-		int u = (i % 2 == 0) ? (i / 2 - 1) : i / 2;
+		int freq;
+		Elem *temp;
+		int leftChild = (i % 2 == 0) ? (i / 2 - 1) : i / 2;
 		bool check = false;
-		while (u >= 0)
+		while (leftChild >= 0)
 		{
-			k = frequency[u];
-			_k = this->slot[u];
-			if (item >= k)
+			freq = frequency[leftChild];
+			temp = this->slot[leftChild];
+			if (item >= freq)
 			{
 				frequency[i] = item;
-				this->slot[i] = _item;
+				this->slot[i] = _elem;
 				check = true;
 				break;
 			}
 			else
 			{
-				frequency[i] = k;
-				this->slot[i] = _k;
-				i = u;
+				frequency[i] = freq;
+				this->slot[i] = temp;
+				i = leftChild;
 			}
-			u = (i % 2 == 0) ? (i / 2 - 1) : i / 2;
+			leftChild = (i % 2 == 0) ? (i / 2 - 1) : i / 2;
 		}
 		if (!check)
 		{
 			frequency[i] = item;
-			this->slot[i] = _item;
+			this->slot[i] = _elem;
 		}
 	}
 };
@@ -576,13 +576,14 @@ public:
 
 class DBHashing : public SearchEngine
 {
-public: 
-enum STT_TYPES
-{
-	_NOT_EMPTY,
-	_DELETED,
-	_NOT_IN_LIST,
-};
+public:
+	enum STT_TYPES
+	{
+		_NOT_EMPTY,
+		_DELETED,
+		_NOT_IN_LIST,
+	};
+
 private:
 	int (*h1)(int);
 	int (*h2)(int);
@@ -591,9 +592,10 @@ private:
 	Elem **map;
 
 public:
-;
+	;
 	DBHashing(int (*h1)(int), int (*h2)(int), int size)
-	{	this->size = size;
+	{
+		this->size = size;
 		this->current_status = new STT_TYPES[size];
 		this->h1 = h1;
 		this->h2 = h2;
@@ -629,11 +631,12 @@ public:
 			int index = (h1(add) + i * h2(add)) % this->size;
 			if (this->map[index]->addr == add)
 			{
-				this->current_status[index] = _DELETED;return;
-				
+				this->current_status[index] = _DELETED;
+				return;
 			}
-			else if (this->current_status[index] != _NOT_IN_LIST)return;
-				
+			else if (this->current_status[index] != _NOT_IN_LIST)
+				return;
+
 			continue;
 		}
 	}
@@ -701,7 +704,7 @@ public:
 			else if (cur->data->addr > address) // Move left
 				cur = cur->left;
 			else
-				cur = cur->right;//Move right
+				cur = cur->right; //Move right
 		}
 	}
 
