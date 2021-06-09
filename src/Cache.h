@@ -3,599 +3,735 @@
 
 #include "main.h"
 
-//AVL Assignment 2
-class Node{
-	public: 
-		Elem *key;
-		Node *l;
-		Node *r;
-		int h;
-		Node(){key=NULL; l=NULL; r=NULL; h=0;}
+class Node
+{
+public:
+	Elem *data;
+	Node *left;
+	Node *right;
+	int height;
+	Node(Elem *data)
+	{
+		this->data = data;
+		this->left = NULL;
+		this->right = NULL;
+		this->height = 1;
+	}
 };
 
-int max(int a,int b){
-	return (a<b)?b:a;
+int height(Node *N)
+{
+	if (N == NULL)
+		return 0;
+	return N->height;
 }
 
-int height(Node *x){
-	if(x==NULL) return 0;
-	return x->h;
+int max(int a, int b)
+{
+	return (a > b) ? a : b;
 }
 
-Node *newNode(Elem *key){
-	Node *node= new Node();
-	node->key = key;
-	node->l = NULL;
-	node->r = NULL;
-	node->h = 1;
+Node *rightRotate(Node *y)
+{
+	Node *x = y->left;
+	Node *T2 = x->right;
+
+	x->right = y;
+	y->left = T2;
+
+	y->height = max(height(y->left),
+					height(y->right)) +
+				1;
+	x->height = max(height(x->left),
+					height(x->right)) +
+				1;
+
+	return x;
+}
+
+Node *leftRotate(Node *x)
+{
+	Node *y = x->right;
+	Node *T2 = y->left;
+
+	y->left = x;
+	x->right = T2;
+
+	x->height = max(height(x->left),
+					height(x->right)) +
+				1;
+	y->height = max(height(y->left),
+					height(y->right)) +
+				1;
+
+	return y;
+}
+
+int getBalance(Node *N)
+{
+	if (N == NULL)
+		return 0;
+	return height(N->left) - height(N->right);
+}
+
+Node *insertNode(Node *node, Elem *data)
+{
+
+	if (node == NULL)
+		return (new Node(data));
+
+	if (data->addr < node->data->addr)
+		node->left = insertNode(node->left, data);
+	else if (data->addr > node->data->addr)
+		node->right = insertNode(node->right, data);
+	else
+		return node;
+
+	node->height = 1 + max(height(node->left),
+						   height(node->right));
+
+	int balance = getBalance(node);
+
+	if (balance > 1 && data->addr < node->left->data->addr)
+		return rightRotate(node);
+
+	if (balance < -1 && data->addr > node->right->data->addr)
+		return leftRotate(node);
+
+	if (balance > 1 && data->addr > node->left->data->addr)
+	{
+		node->left = leftRotate(node->left);
+		return rightRotate(node);
+	}
+
+	if (balance < -1 && data->addr < node->right->data->addr)
+	{
+		node->right = rightRotate(node->right);
+		return leftRotate(node);
+	}
+
 	return node;
 }
 
-Node *rotateRight(Node *y)
+Node *minValueNode(Node *node)
 {
-    Node *x = y->l;
-    Node *z = x->r;
-    x->r = y;
-    y->l = z;
-    y->h = max(height(y->l),height(y->r)) + 1;
-    x->h = max(height(x->l),height(x->r)) + 1;
-    return x;
+	Node *current = node;
+
+	while (current->left != NULL)
+		current = current->left;
+
+	return current;
 }
 
-Node *rotateLeft(Node *x)
+Node *deleteNodeAVL(Node *root, int data)
 {
-    Node *y = x->r;
-    Node *z= y->l;
-    y->l = x;
-    x->r = z;
-    x->h = max(height(x->l),height(x->r)) + 1;
-    y->h = max(height(y->l),height(y->r)) + 1;
-    return y;
+	if (root == NULL)
+		return root;
+
+	if (data < root->data->addr)
+		root->left = deleteNodeAVL(root->left, data);
+	else if (data > root->data->addr)
+		root->right = deleteNodeAVL(root->right, data);
+	else
+	{
+		if ((root->left == NULL) ||
+			(root->right == NULL))
+		{
+			Node *temp = root->left ? root->left : root->right;
+
+			if (temp == NULL)
+			{
+				temp = root;
+				root = NULL;
+			}
+			else
+				*root = *temp;
+			free(temp);
+		}
+		else
+		{
+			Node *temp = minValueNode(root->right);
+			root->data = temp->data;
+			root->right = deleteNodeAVL(root->right, temp->data->addr);
+		}
+	}
+
+	if (root == NULL)
+		return root;
+	root->height = 1 + max(height(root->left), height(root->right));
+	int balance = getBalance(root);
+
+	if (balance < -1 && getBalance(root->right) > 0)
+	{
+		root->right = rightRotate(root->right);
+		return leftRotate(root);
+	}
+	return root;
+
+	if (balance < -1 && getBalance(root->right) <= 0)
+		return leftRotate(root);
+
+	if (balance > 1 && getBalance(root->left) < 0)
+	{
+		root->left = leftRotate(root->left);
+		return rightRotate(root);
+	}
+
+	if (balance > 1 && getBalance(root->left) >= 0)
+		return rightRotate(root);
 }
-int getBalance(Node *x)
+
+enum STT_TYPES
 {
-    if (x == NULL)
-        return 0;
-    return height(x->l) - height(x->r);
-}
+	NOT_IN_LIST,
+	UN_EMPTY,
+	DELETED
+};
 
-Node* insertNode(Node* node, Elem *key)
+class ReplacementPolicy
 {
-    
-    if (node == NULL)
-        return(newNode(key));
- 
-    if (key->addr < node->key->addr)
-        node->l = insertNode(node->l, key);
-    else if (key->addr > node->key->addr)
-        node->r = insertNode(node->r, key);
-    else  
-		return node;
- 
-    node->h = 1 + max(height(node->l),height(node->r));
-    int balance = getBalance(node);
- 
-    // Left Left Case
-    if (balance > 1 && key->addr < node->l->key->addr)
-        return rotateRight(node);
- 
-    // Right Right Case
-    if (balance < -1 && key->addr > node->r->key->addr)
-        return rotateLeft(node);
- 
-    // Left Right Case
-    if (balance > 1 && key->addr > node->l->key->addr)
-    {
-        node->l = rotateLeft(node->l);
-        return rotateRight(node);
-    }
- 
-    // Right Left Case
-    if (balance < -1 && key->addr < node->r->key->addr)
-    {
-        node->r = rotateRight(node->r);
-        return rotateLeft(node);
-    }
- 
-    return node;
-}
+protected:
+	int size;
+	Elem **slot;
 
-Node * minValueNode(Node* node) 
-{ 
-    Node* run = node; 
-    while (run->l != NULL) 
-        run = run->l; 
-    return run; 
-} 
-Node* deleteNodeAVL(Node* root, int key) 
-{ 
-    if (root == NULL) return root; 
-
-    if ( key < root->key->addr ) 
-        root->l = deleteNodeAVL(root->l, key); 
-    else if( key > root->key->addr ) 
-        root->r = deleteNodeAVL(root->r, key); 
-    else
-    { 
-        if( (root->l == NULL) ||
-            (root->r == NULL) ) 
-        { 
-            Node *temp = root->l ? root->l : root->r; 
-         
-            if (temp == NULL) 
-            { 
-                temp = root; 
-                root = NULL; 
-            } 
-            else  *root = *temp; 
-            free(temp); 
-        } 
-        else
-        { 
-            Node* temp = minValueNode(root->r); 
-            root->key = temp->key; 
-            root->r = deleteNodeAVL(root->r, temp->key->addr); 
-        } 
-    } 
-  
-    if (root == NULL) 
-    return root; 
-    root->h = 1 + max(height(root->l), height(root->r)); 
-    int balance = getBalance(root); 
-  
-    // Left Left Case 
-    if (balance > 1 && getBalance(root->l) >= 0) 
-        return rotateRight(root); 
-  
-    // Left Right Case 
-    if (balance > 1 && getBalance(root->l) < 0) 
-    { 
-        root->l = rotateLeft(root->l); 
-        return rotateRight(root); 
-    } 
-  
-    // Right Right Case 
-    if (balance < -1 && getBalance(root->r) <= 0) 
-        return rotateLeft(root); 
-  
-    // Right Left Case 
-    if (balance < -1 && getBalance(root->r) > 0) 
-    { 
-        root->r = rotateRight(root->r); 
-        return rotateLeft(root); 
-    }
-    return root; 
-} 
-
-
-//Ass3 Begin
-class ReplacementPolicy {
-	protected:
-	int count;
-	Elem** arr;
-	
-	public:
-	virtual Elem *insert(Elem* e,int idx){return NULL;};//insert e into arr[idx] if idx != -1 else into the position by replacement policy
-	virtual void access(int idx) = 0;//idx is index in the cache of the accessed element 
-	virtual void access(Elem *e) = 0;
-	virtual int remove() = 0; 
+public:
+	virtual Elem *insert(Elem *e, int index) = 0;
+	virtual void proceed(int index){};
+	virtual void proceed(Elem *e){};
+	virtual int remove() = 0;
 	virtual void print() = 0;
-	virtual ~ReplacementPolicy(){}
-	bool isFull() {return count == MAXSIZE;}
-	bool isEmpty() {return count == 0;}
-	Elem* getValue(int idx){
-		return arr[idx];
-	}
-	void replace(int idx,Elem* e) {
-		access(idx);
-		arr[idx] = e;
+	virtual void replace(int index, Elem *e) {}
+	virtual ~ReplacementPolicy() {}
+	bool full()
+	{
+		return (this->size == MAXSIZE);
 	}
 
-	Data *read(int addr){
-		for(int i=0; i<this->count; i++){
-			if(this->arr[i]->addr == addr){
-				Data *ret = this->arr[i]->data;
-				Elem *e = new Elem(addr,NULL,true);
-				this->access(e);
+	Data *read(int addr)
+	{
+		for (int i = 0; i < this->size; i++)
+		{
+			if (this->slot[i]->addr == addr)
+			{
+				Data *ret = this->slot[i]->data;
+				this->proceed(new Elem(addr, NULL, true));
 				return ret;
 			}
 		}
 		return NULL;
 	}
 
-	Elem *put(int addr, Data *cont){
-		Elem *e = new Elem(addr,cont,true);
-		e = insert(e,0);
-		if(e!=NULL) 
+	Elem *put(int addr, Data *cont)
+	{
+		Elem *e = new Elem(addr, cont, true);
+		e = insert(e, 0);
+		if (e != NULL)
 			e->sync = true;
 		return e;
 	}
 
-	Elem *write(int addr, Data *cont, bool &overwrite){
+	Elem *write(int addr, Data *cont, bool &duplicated)
+	{
 		bool found = false;
-		for(int i=0; i<this->count; i++){
-			if(this->arr[i]->addr == addr){
-				this->arr[i]->data = cont;
-				this->arr[i]->sync = false;
-				overwrite = true;
+		for (int i = 0; i < this->size; i++)
+		{
+			if (this->slot[i]->addr == addr)
+			{
+				this->slot[i]->data = cont;
+				this->slot[i]->sync = false;
+				duplicated = true;
 				found = true;
 				break;
 			}
 		}
-		Elem *ret = NULL; 
-		if(!found){
-			Elem *pNew = new Elem(addr,cont,false);
-			pNew = insert(pNew,0);
-			if(pNew!=NULL) pNew->sync = true;
-			ret = pNew;
+
+		if (!found)
+		{
+			Elem *newElem = new Elem(addr, cont, false);
+			newElem = insert(newElem, 0);
+			if (newElem != NULL)
+				newElem->sync = true;
+			return newElem;
 		}
-		return ret;
+		return NULL;
 	}
 };
 
-class SearchEngine {
-	public:
-	virtual int search(int key) = 0; // -1 if not found
-	virtual void insert(Elem *key,int idx) = 0;
-	virtual	void deleteNode(int key) = 0;
-	virtual void print(ReplacementPolicy* r) = 0;
-	virtual void write(int add, Data *cont) = 0;
-	virtual ~SearchEngine(){}
-};
+class FIFO : public ReplacementPolicy
+{
 
-
-class FIFO : public ReplacementPolicy {
-	//Use Queue
-	public:
+private:
 	int front, rear;
-	int max;
-	FIFO(){count = 0; arr = new Elem*[MAXSIZE]; this->max = MAXSIZE; this->front = 0; this->rear = this->max - 1;}
-	~FIFO(){}
-	Elem *insert(Elem *e,int idx){
-		Elem *ret;
-		if(isFull()){
-			ret = this->arr[this->front];
-			this->arr[this->front] = e;
-			this->front = (this->front + 1) % this->max;
-		}
-		else{
-			this->rear = (this->rear + 1) % this->max;
-			this->arr[this->rear] = e;
-			this->count++;
-			ret = NULL;
-		}
-		return ret;
-	}
-	
-	void access(int idx) {
-	
-	}
-	void access(Elem *e){
 
+public:
+	FIFO()
+	{
+		this->front = 0;
+		this->rear = MAXSIZE - 1;
+		this->size = 0;
+		this->slot = new Elem *[MAXSIZE];
 	}
-	int remove(){return 0;}
-	void print(){
-		int run = this->front;
-		int i = 0;
-		while(i < this->count){
-			this->arr[run]->print();
-			i++;
-			run = (run < this->count - 1) ? run + 1 : 0;
+	Elem *insert(Elem *e, int index)
+	{
+
+		if (this->full())
+		{
+			Elem *ret;
+			ret = this->slot[this->front];
+			this->slot[this->front] = e;
+			this->front = (this->front + 1) % MAXSIZE;
+			return ret;
+		}
+		else
+		{
+
+			this->rear = (this->rear + 1) % MAXSIZE;
+			this->slot[this->rear] = e;
+			this->size++;
+			return NULL;
+		}
+	}
+
+	int remove()
+	{
+		return 0;
+	}
+	void print()
+	{
+		int cur = this->front;
+
+		for (int i = 0; i < this->size; i++)
+		{
+			this->slot[cur]->print();
+			if (cur < this->size - 1)
+				cur++;
+			else
+				cur = 0;
 		}
 	}
 };
 
-class MRU : public ReplacementPolicy {
-	public:
+class MRU : public ReplacementPolicy
+{
+protected:
 	int activity;
-	int *idx;
-	MRU(){
-		count = 0; 
-		arr = new Elem*[MAXSIZE]; 
+	int *index;
+
+public:
+	MRU()
+	{
+		size = 0;
+		slot = new Elem *[MAXSIZE];
 		activity = 0;
-		idx = new int[MAXSIZE];
-		for(int i=0; i < MAXSIZE; i++) idx[i] = 0;
+		index = new int[MAXSIZE];
+		for (int i = 0; i < MAXSIZE; i++)
+			index[i] = 0;
 	}
-	~MRU(){
-		delete idx;
+	~MRU()
+	{
+		delete index;
 	}
-	Elem *insert(Elem* e,int idx){
+
+	void replace(int index, Elem *e)
+	{
+		proceed(index);
+		slot[index] = e;
+	}
+	void proceed(int index)
+	{
+		this->index[index] = ++activity;
+	}
+	Elem *insert(Elem *e, int index)
+	{
 		Elem *ret;
-		if(isFull()){
+		if (this->full())
+		{
 			int re = remove();
-			ret = this->arr[re];
-			this->replace(re,e);
+			ret = this->slot[re];
+			this->replace(re, e);
 		}
-		else{
-			this->replace(this->count,e);
+		else
+		{
+			this->replace(this->size, e);
 			ret = NULL;
-			this->count++;
+			this->size++;
 		}
 		return ret;
 	}
-	void access(int idx){
-		this->idx[idx] = ++activity;
-	}
-	void access(Elem *e){
-		for(int i=0; i<this->count; i++)
-			if(this->arr[i]->addr == e->addr){
-				access(i);
+
+	void proceed(Elem *ele)
+	{
+		for (int i = 0; i < this->size; i++)
+			if (ele->addr == this->slot[i]->addr)
+			{
+				proceed(i);
 				break;
 			}
 	}
-	int remove(){
-		for(int i=0; i<MAXSIZE; i++)
-			if(this->activity == idx[i]) return i;
+
+	int remove()
+	{
+		for (int i = 0; i < MAXSIZE; i++)
+			if (this->activity == index[i])
+				return i;
 		return 0;
 	}
-	void print(){
-		if(this->count == 0) return ;
-		int run = 0;
+	void print()
+	{
+		if (this->size == 0)
+			return;
+		int cur = 0;
 		int run_activity = this->activity;
-		while(run<this->count){
-			for(int i=0; i< this->count; i++){
-				if(this->idx[i] == run_activity) {this->arr[i]->print(); run++;break;}
+		while (cur < this->size)
+		{
+			for (int i = 0; i < this->size; i++)
+			{
+				if (this->index[i] == run_activity)
+				{
+					this->slot[i]->print();
+					cur++;
+					break;
+				}
 			}
 			run_activity--;
 		}
 	}
 };
-class LRU: public MRU {
-	public:
-	int remove() override {
+class LRU : public MRU
+{
+public:
+	int remove() override
+	{
 		int min = 0;
-		for(int i=1; i<MAXSIZE; i++)
-			if(this->idx[min] > this->idx[i]) min = i;
+		for (int i = 1; i < MAXSIZE; i++)
+			if (this->index[min] > this->index[i])
+				min = i;
 		return min;
 	}
 };
 
-class LFU: public ReplacementPolicy {
-	public:
-	int *freq;
-	int *idx;
+class LFU : public ReplacementPolicy
+{
+private:
+	int *frequency;
+	int *index;
 	int activity;
-	LFU(){
-		count = 0; 
-		arr = new Elem*[MAXSIZE]; 
-		freq = new int[MAXSIZE];
-		idx = new int[MAXSIZE];
+
+public:
+	LFU()
+	{
+		size = 0;
+		slot = new Elem *[MAXSIZE];
+		frequency = new int[MAXSIZE];
+		index = new int[MAXSIZE];
 		activity = 0;
-		for(int i=0; i < MAXSIZE; i++) {freq[i] = 0; idx[i]=0;}
-	}
-	~LFU(){
-		delete freq;
-		delete idx;
-	}
-	Elem *insert(Elem* e,int idx){
-		Elem *ret;
-		if(isFull()){
-			int re = remove();
-			ret = this->arr[re];
-			this->arr[re] = this->arr[this->count - 1];
-			this->freq[re] = this->freq[this->count - 1];
-			this->count--;
-			reheapDown(re);
-			this->count++;
-			replace(this->count-1,e);
-			this->freq[this->count-1] = 1;
-			reheapUp(this->count-1);
+		for (int i = 0; i < MAXSIZE; i++)
+		{
+			frequency[i] = 0;
+			index[i] = 0;
 		}
-		else{
-			replace(this->count,e);
-			this->count++;
+	}
+	~LFU()
+	{
+		delete frequency;
+		delete index;
+	}
+	void replace(int index, Elem *e)
+	{
+		proceed(index);
+		slot[index] = e;
+	}
+	void proceed(int index)
+	{
+		this->frequency[index]++;
+		this->index[index] = ++activity;
+	}
+	Elem *insert(Elem *e, int index)
+	{
+		Elem *ret;
+		if (full())
+		{
+			int re = remove();
+			ret = this->slot[re];
+			this->slot[re] = this->slot[this->size - 1];
+			this->frequency[re] = this->frequency[this->size - 1];
+			this->size--;
+			downHeap(re);
+			this->size++;
+			replace(this->size - 1, e);
+			this->frequency[this->size - 1] = 1;
+			upHeap(this->size - 1);
+		}
+		else
+		{
+			replace(this->size, e);
+			this->size++;
 			ret = NULL;
-			reheapUp(this->count-1);
+			upHeap(this->size - 1);
 		}
 		return ret;
 	}
-	void access(int idx){
-		this->freq[idx]++;
-		this->idx[idx] = ++activity;
-	}
-	void access(Elem *e){
-		for(int i=0; i<this->count; i++)
-			if(this->arr[i]->addr == e->addr){
-				access(i);
-				reheapDown(i);
+
+	void proceed(Elem *e)
+	{
+		for (int i = 0; i < this->size; i++)
+			if (this->slot[i]->addr == e->addr)
+			{
+				proceed(i);
+				downHeap(i);
 				break;
 			}
 	}
-	int remove(){
+	int remove()
+	{
 		return 0;
 	}
-	void print(){
-		for(int i=0; i<this->count; i++)
-			this->arr[i]->print();
-	}
-	void reheapDown(int index)
+	void print()
 	{
-    int item = freq[index];
-	Elem *_item = this->arr[index];
-    int i = index;
-    int u = 0;
-    int k;
-	Elem *_k;
-    bool check = false;
-    while(2*i + 1 < this->count){
-        u = 2*i + 1;
-        k = freq[u];
-		_k = this->arr[u];
-        if(2*i + 2 < this->count) {
-            if(k > freq[u+1])
-                k = freq[++u];
-				_k = this->arr[u];
-        }
-        if(item < k){
-            freq[i] = item;
-			this->arr[i] = _item;
-            check = true;
-            break;
-        }
-        else{
-            freq[i] = k;
-			this->arr[i] = _k;
-            i = u;
-        }
-    }
-    if(!check){
-        freq[i] = item;
-		this->arr[i] = _item;
-    }
-	}
-	void reheapUp(int index)
-	{
-    int item = freq[index];
-	Elem *_item = this->arr[index];
-    int i = index;
-    int k;
-	Elem *_k;
-    int u = (i%2 == 0)? (i/2 - 1) : i/2; 
-    bool check = false;
-    while(u >= 0){
-        k = freq[u];
-		_k = this->arr[u];
-        if(item >= k){
-            freq[i] = item;
-			this->arr[i] = _item;
-            check = true;
-            break;
-        }
-        else{
-            freq[i] = k;
-			this->arr[i] = _k;
-            i = u;
-        }
-        u = (i%2 == 0)? (i/2 - 1) : i/2;
-    }
-    if(!check){
-        freq[i] = item;
-		this->arr[i] = _item;
-    }
-}
 
+		int i = 0;
+		while (i < this->size)
+		{
+			this->slot[i++]->print();
+		}
+	}
+	void downHeap(int index)
+	{
+		int item = frequency[index];
+		Elem *_item = this->slot[index];
+		int i = index;
+		int u = 0;
+		int k;
+		Elem *_k;
+		bool check = false;
+		while (2 * i + 1 < this->size)
+		{
+			u = 2 * i + 1;
+			k = frequency[u];
+			_k = this->slot[u];
+			if (2 * i + 2 < this->size)
+			{
+				if (k > frequency[u + 1])
+					k = frequency[++u];
+				_k = this->slot[u];
+			}
+			if (item < k)
+			{
+				frequency[i] = item;
+				this->slot[i] = _item;
+				check = true;
+				break;
+			}
+			else
+			{
+				frequency[i] = k;
+				this->slot[i] = _k;
+				i = u;
+			}
+		}
+		if (!check)
+		{
+			frequency[i] = item;
+			this->slot[i] = _item;
+		}
+	}
+	void upHeap(int index)
+	{
+		int item = frequency[index];
+		Elem *_item = this->slot[index];
+		int i = index;
+		int k;
+		Elem *_k;
+		int u = (i % 2 == 0) ? (i / 2 - 1) : i / 2;
+		bool check = false;
+		while (u >= 0)
+		{
+			k = frequency[u];
+			_k = this->slot[u];
+			if (item >= k)
+			{
+				frequency[i] = item;
+				this->slot[i] = _item;
+				check = true;
+				break;
+			}
+			else
+			{
+				frequency[i] = k;
+				this->slot[i] = _k;
+				i = u;
+			}
+			u = (i % 2 == 0) ? (i / 2 - 1) : i / 2;
+		}
+		if (!check)
+		{
+			frequency[i] = item;
+			this->slot[i] = _item;
+		}
+	}
 };
-enum STATUS_TYPE {NIL, NON_EMPTY, DELETED};
-class DBHashing: public SearchEngine {
+
+class SearchEngine
+{
+public:
+	virtual int search(int data) = 0; // -1 if not found
+	virtual void insert(Elem *data, int index) = 0;
+	virtual void deleteNode(int data) = 0;
+	virtual void print() = 0;
+	virtual void write(int add, Data *cont) = 0;
+	virtual ~SearchEngine() {}
+};
+
+class DBHashing : public SearchEngine
+{
 	int (*h1)(int);
 	int (*h2)(int);
 	int size;
-	STATUS_TYPE* status;
-	
-	Elem **hashtable;
-	public:
-		DBHashing(int (*h1)(int),int (*h2)(int),int s){
-			this->h1 =h1;
-			this->h2 =h2;
-			this->size =s;
-			this->status = new STATUS_TYPE[size];
-			hashtable = new Elem*[s];
-			for(int i=0; i<s; i++){
-				hashtable[i]=NULL;
-				this->status[i]=NIL;
+	STT_TYPES *current_status;
+	Elem **map;
+
+public:
+	DBHashing(int (*h1)(int), int (*h2)(int), int s)
+	{
+		this->h1 = h1;
+		this->h2 = h2;
+		this->size = s;
+		this->current_status = new STT_TYPES[size];
+		map = new Elem *[s];
+		for (int i = 0; i < s; i++)
+		{
+			map[i] = NULL;
+			this->current_status[i] = NOT_IN_LIST;
+		}
+	}
+	~DBHashing()
+	{
+		delete current_status;
+	}
+	void insert(Elem *data, int i)
+	{
+		i = 0;
+		while (i < this->size)
+		{
+			int index = (h1(data->addr) + i * h2(data->addr)) % this->size;
+			if (this->current_status[index] != UN_EMPTY)
+			{
+				this->map[index] = data;
+				this->current_status[index] = UN_EMPTY;
+				return;
 			}
+			else
+				i++;
 		}
-		~DBHashing(){
-			delete status;
-		}
-		void insert(Elem *key,int i){
-			i=0;
-			while(i<this->size){
-				int idx = (h1(key->addr) + i*h2(key->addr)) % this->size;
-				if(this->status[idx]!=NON_EMPTY){
-					this->hashtable[idx] = key;
-					this->status[idx]=NON_EMPTY;
-					return ;
-				}
-				else i++;
+	}
+	void deleteNode(int data)
+	{
+		int i = 0;
+		while (i < this->size)
+		{
+			int index = (h1(data) + i * h2(data)) % this->size;
+			if (this->map[index]->addr == data)
+			{
+				this->current_status[index] = DELETED;
+				return;
 			}
+			else if (this->current_status[index] != NOT_IN_LIST)
+				return;
+			else
+				i++;
 		}
-		void deleteNode(int key){
-			int i=0;
-			while(i<this->size){
-				int idx = (h1(key) + i*h2(key)) % this->size;
-				if(this->hashtable[idx]->addr == key){
-					this->status[idx] = DELETED;
-					return ;
-				}
-				else if(this->status[idx]!=NIL){
-					return ;
-				}
-				else i++;
-			}
-		}
-		void write(int addr, Data *cont){
-			for(int i=0; i<this->size; i++){
-				if(this->status[i]==NON_EMPTY)
-				if(hashtable[i]->addr == addr){
-					hashtable[i]->data = cont;
-					hashtable[i]->sync = false;
+	}
+	void write(int addr, Data *cont)
+	{
+		for (int i = 0; i < this->size; i++)
+		{
+			if (this->current_status[i] == UN_EMPTY)
+				if (map[i]->addr == addr)
+				{
+					map[i]->data = cont;
+					map[i]->sync = false;
 					break;
 				}
-			}
 		}
-		void print(ReplacementPolicy* q){
-			cout << "Prime memory:" << endl;
-			for(int i=0; i<this->size; i++){
-				if(this->status[i]==NON_EMPTY) 
-					hashtable[i]->print();
-			}
+	}
+	void print()
+	{
+		cout << "Prime memory:" << endl;
+		for (int i = 0; i < this->size; i++)
+		{
+			if (this->current_status[i] == UN_EMPTY)
+				map[i]->print();
 		}
-		int search(int key) {return 0;}
+	}
+	int search(int data) { return 0; }
 };
 
-class AVL : public SearchEngine {
+class AVL : public SearchEngine
+{
 	Node *root;
-	public:
-		AVL() {
-			root = NULL;
-		}
-		~AVL() {
-			delete root;
-		}
-		void insert(Elem *key,int i){
-			root = insertNode(root, key);
-		}
-		void deleteNode(int key){
-			root = deleteNodeAVL(root,key);
-		}
-		void print(ReplacementPolicy* q) {
-			cout << "Print AVL in inorder:\n";
-			printInOrder(this->root);
-			cout << "Print AVL in preorder:\n";
-			printPreOrder(this->root);
-		}
-		void write(int addr, Data *cont){
-			Node *run = this->root;
-			while(run!=NULL){
-				if(run->key->addr == addr){
-					run->key->data = cont;
-					run->key->sync = false;
-					break;
-				}
-				else if(run->key->addr > addr){
-					run = run->l;
-				}
-				else run = run->r;
+
+public:
+	AVL()
+	{
+		this->root = NULL;
+	}
+	~AVL()
+	{
+		delete root;
+	}
+	void insert(Elem *data, int i)
+	{
+		this->root = insertNode(this->root, data);
+	}
+	void deleteNode(int data)
+	{
+		root = deleteNodeAVL(root, data);
+	}
+	void print()
+	{
+		cout << "Print AVL in inorder:" << endl;
+		inOrder(this->root);
+		cout << "Print AVL in preorder:" << endl;
+		preOrder(this->root);
+	}
+	void write(int addr, Data *cont)
+	{
+		Node *cur = this->root;
+		while (cur != NULL)
+		{
+			if (cur->data->addr == addr)
+			{
+				cur->data->data = cont;
+				cur->data->sync = false;
+				break;
 			}
+			else if (cur->data->addr > addr)
+				cur = cur->left;
+
+			else
+				cur = cur->right;
 		}
-		int search(int key){
-			return 0;
-		}
-		void printInOrder(Node *x){
-			if(x!=NULL){
-				printInOrder(x->l);
-				x->key->print();
-				printInOrder(x->r);
-			}
-		}
-		void printPreOrder(Node *x){
-			if(x!=NULL){
-				x->key->print();
-				printPreOrder(x->l);
-				printPreOrder(x->r);
-			}
-		}
+	}
+	int search(int data)
+	{
+		return 0;
+	}
+	void inOrder(Node *node)
+	{
+		if (node == NULL)
+			return;
+		inOrder(node->left);
+		node->data->print();
+		inOrder(node->right);
+	}
+	void preOrder(Node *node)
+	{
+		if (node == NULL)
+			return;
+		node->data->print();
+		preOrder(node->left);
+		preOrder(node->right);
+	}
 };
 
 #endif

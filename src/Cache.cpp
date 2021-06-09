@@ -1,41 +1,52 @@
 #include "main.h"
 
+Cache::Cache(SearchEngine *s, ReplacementPolicy *r)
+{
 
-Cache::Cache(SearchEngine* s,ReplacementPolicy* r):rp(r),s_engine(s) {}
-Cache::~Cache(){
-	delete rp;
-	delete s_engine;
+    this->rp = r;
+    this->s_engine = s;
 }
-Data* Cache::read(int addr) {
+Cache::~Cache()
+{
+    delete rp;
+    delete s_engine;
+}
+Data *Cache::read(int addr)
+{
     return rp->read(addr);
 }
-Elem* Cache::put(int addr, Data* cont) {
-    Elem *pNew = new Elem(addr,cont,true);
-    Elem *ret = rp->put(addr,cont);
-    if(ret!=NULL)
-        this->s_engine->deleteNode(ret->addr);
-    this->s_engine->insert(pNew,0);
-    return ret;
+Elem *Cache::put(int addr, Data *cont)
+{
+    
+    Elem *retValue = rp->put(addr, cont);
+    if (retValue != NULL)
+        this->s_engine->deleteNode(retValue->addr);
+    this->s_engine->insert(new Elem(addr, cont, true), 0);
+    return retValue;
 }
-Elem* Cache::write(int addr, Data* cont) {
-    bool overwrite = false;
-    Elem *pNew = new Elem(addr,cont,false);
-    Elem *ret = rp->write(addr,cont,overwrite);
-    if(overwrite) {
-        s_engine->write(addr,cont);
-        rp->access(pNew);
+Elem *Cache::write(int addr, Data *cont)
+{
+    bool duplicated = false;
+    Elem *newElem = new Elem(addr, cont, false);
+    Elem *retValue = rp->write(addr, cont, duplicated);
+    if (duplicated)
+    {
+        s_engine->write(addr, cont);
+        rp->proceed(newElem);
     }
-    else{
-        if(ret!=NULL) 
-            this->s_engine->deleteNode(ret->addr);
-        this->s_engine->insert(pNew,0);
+    else
+    {
+        if (retValue != NULL)
+            this->s_engine->deleteNode(retValue->addr);
+        this->s_engine->insert(newElem, 0);
     }
-    return ret;
+    return retValue;
 }
-void Cache::printRP() {
+void Cache::printRP()
+{
     rp->print();
 }
-void Cache::printSE() {
-    s_engine->print(this->rp);
+void Cache::printSE()
+{
+    s_engine->print();
 }
-
