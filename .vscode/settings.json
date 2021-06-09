@@ -5,6 +5,7 @@
         "ostream": "cpp",
         "string": "cpp",
         "xlocnum": "cpp",
-        "limits": "cpp"
+        "limits": "cpp",
+        "xutility": "cpp"
     }
 }

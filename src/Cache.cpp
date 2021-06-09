@@ -1,10 +1,9 @@
 #include "main.h"
 
-Cache::Cache(SearchEngine *s, ReplacementPolicy *r)
+Cache::Cache(SearchEngine *sEngine, ReplacementPolicy *rPolicy)
 {
-
-    this->rp = r;
-    this->s_engine = s;
+    this->s_engine = sEngine;
+    this->rp = rPolicy;
 }
 Cache::~Cache()
 {
@@ -17,7 +16,7 @@ Data *Cache::read(int addr)
 }
 Elem *Cache::put(int addr, Data *cont)
 {
-    
+
     Elem *retValue = rp->put(addr, cont);
     if (retValue != NULL)
         this->s_engine->deleteNode(retValue->addr);
@@ -32,7 +31,7 @@ Elem *Cache::write(int addr, Data *cont)
     if (duplicated)
     {
         s_engine->write(addr, cont);
-        rp->proceed(newElem);
+        rp->visit(newElem);
     }
     else
     {
