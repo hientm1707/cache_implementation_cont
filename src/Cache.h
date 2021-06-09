@@ -454,6 +454,7 @@ public:
 			replace(this->size - 1, e);
 			frequency[this->size - 1] = 1;
 			upHeap(size - 1);
+			return ret;
 		}
 		else
 		{
