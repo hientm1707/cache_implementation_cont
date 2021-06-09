@@ -314,10 +314,10 @@ protected:
 public:
 	MRU()
 	{
-		size = 0;
-		slot = new Elem *[MAXSIZE];
-		counter = 0;
-		index = new int[MAXSIZE];
+		this->size = 0;
+		this->slot = new Elem *[MAXSIZE];
+		this->counter = 0;
+		this->index = new int[MAXSIZE];
 		for (int i = 0; i < MAXSIZE; i++)
 			index[i] = 0;
 	}
@@ -340,9 +340,9 @@ public:
 		Elem *ret;
 		if (this->full())
 		{
-			int re = remove();
-			ret = this->slot[re];
-			this->replace(re, e);
+			int rem = this->remove();
+			ret = this->slot[rem];
+			this->replace(rem, e);
 		}
 		else
 		{
@@ -375,19 +375,19 @@ public:
 		if (this->size == 0)
 			return;
 		int cur = 0;
-		int run_activity = this->counter;
+		int runner = this->counter;
 		while (cur < this->size)
 		{
 			for (int i = 0; i < this->size; i++)
 			{
-				if (this->index[i] == run_activity)
+				if (this->index[i] == runner)
 				{
 					this->slot[i]->print();
 					cur++;
 					break;
 				}
 			}
-			run_activity--;
+			runner--;
 		}
 	}
 };
@@ -414,15 +414,15 @@ private:
 public:
 	LFU()
 	{
-		size = 0;
-		slot = new Elem *[MAXSIZE];
-		frequency = new int[MAXSIZE];
-		index = new int[MAXSIZE];
-		counter = 0;
+		this->size = 0;
+		this->slot = new Elem *[MAXSIZE];
+		this->frequency = new int[MAXSIZE];
+		this->index = new int[MAXSIZE];
+		this->counter = 0;
 		for (int i = 0; i < MAXSIZE; i++)
-		{
-			frequency[i] = 0;
+		{	
 			index[i] = 0;
+			frequency[i] = 0;
 		}
 	}
 	~LFU()
@@ -437,33 +437,32 @@ public:
 	}
 	void visit(int index)
 	{
-		this->frequency[index]++;
-		this->index[index] = ++counter;
+		this->frequency[index] =  this->frequency[index]+1;
+		this->index[index] = counter+1;
+		this->counter++;
 	}
 	Elem *insert(Elem *e, int index)
 	{
-		Elem *ret;
 		if (full())
-		{
-			int re = remove();
-			ret = this->slot[re];
-			this->slot[re] = this->slot[this->size - 1];
-			this->frequency[re] = this->frequency[this->size - 1];
-			this->size--;
-			downHeap(re);
-			this->size++;
+		{	Elem *ret;
+			int removeIndex = this->remove();
+			ret = this->slot[removeIndex];
+			slot[removeIndex] = this->slot[this->size - 1];
+			frequency[removeIndex] = this->frequency[this->size - 1];
+			--size;
+			downHeap(removeIndex);
+			++size;
 			replace(this->size - 1, e);
-			this->frequency[this->size - 1] = 1;
-			upHeap(this->size - 1);
+			frequency[this->size - 1] = 1;
+			upHeap(size - 1);
 		}
 		else
 		{
 			replace(this->size, e);
-			this->size++;
-			ret = NULL;
+			size++;
 			upHeap(this->size - 1);
 		}
-		return ret;
+		return NULL;
 	}
 
 	void visit(Elem *e)
