@@ -48,5 +48,5 @@ void Cache::printRP()
 }
 void Cache::printSE()
 {
-    s_engine->print(this->rp);
+    s_engine->print();
 }
