@@ -190,15 +190,15 @@ protected:
 	{
 		return (this->size == MAXSIZE);
 	}
-	virtual Elem *insert(Elem *e, int index) = 0;
+	virtual Elem *insert(Elem *elem, int index) = 0;
 	virtual int remove() = 0;
-	virtual void replace(int index, Elem *e) {}
+	virtual void replace(int index, Elem *elem) {}
 
 public:
 	virtual ~ReplacementPolicy(){};
 	virtual void print() = 0;
 	virtual void visit(int index){};
-	virtual void visit(Elem *e){};
+	virtual void visit(Elem *elem){};
 	Data *read(int addr)
 	{
 		for (int i = 0; i < this->size; i++)
@@ -215,11 +215,11 @@ public:
 
 	Elem *put(int addr, Data *cont)
 	{
-		Elem *e = new Elem(addr, cont, true);
-		e = insert(e, 0);
-		if (e != NULL)
-			e->sync = true;
-		return e;
+		Elem *elem = new Elem(addr, cont, true);
+		elem = insert(elem, 0);
+		if (elem != NULL)
+			elem->sync = true;
+		return elem;
 	}
 
 	Elem *write(int addr, Data *cont, bool &duplicated)
@@ -263,14 +263,14 @@ public:
 		this->size = 0;
 		this->slot = new Elem *[MAXSIZE];
 	}
-	Elem *insert(Elem *e, int index)
+	Elem *insert(Elem *elem, int index)
 	{
 
 		if (this->full())
 		{
 			Elem *ret;
 			ret = this->slot[this->front];
-			this->slot[this->front] = e;
+			this->slot[this->front] = elem;
 			this->front = (this->front + 1) % MAXSIZE;
 			return ret;
 		}
@@ -278,7 +278,7 @@ public:
 		{
 
 			this->rear = (this->rear + 1) % MAXSIZE;
-			this->slot[this->rear] = e;
+			this->slot[this->rear] = elem;
 			this->size++;
 			return NULL;
 		}
@@ -324,27 +324,27 @@ public:
 		delete index;
 	}
 
-	void replace(int index, Elem *e)
+	void replace(int index, Elem *elem)
 	{
 		visit(index);
-		slot[index] = e;
+		slot[index] = elem;
 	}
 	void visit(int index)
 	{
 		this->index[index] = ++counter;
 	}
-	Elem *insert(Elem *e, int index)
+	Elem *insert(Elem *elem, int index)
 	{
 		Elem *ret;
 		if (this->full())
 		{
 			int rem = this->remove();
 			ret = this->slot[rem];
-			this->replace(rem, e);
+			this->replace(rem, elem);
 		}
 		else
 		{
-			this->replace(this->size, e);
+			this->replace(this->size, elem);
 			ret = NULL;
 			this->size++;
 		}
@@ -394,11 +394,11 @@ class LRU : public MRU
 public:
 	int remove() override
 	{
-		int min = 0;
+		int minCount = 0;
 		for (int i = 1; i < MAXSIZE; i++)
-			if (this->index[min] > this->index[i])
-				min = i;
-		return min;
+			if (this->index[minCount] > this->index[i])
+				minCount = i;
+		return minCount;
 	}
 };
 
@@ -412,10 +412,10 @@ private:
 public:
 	LFU()
 	{
-		this->size = 0;
-		this->slot = new Elem *[MAXSIZE];
 		this->frequency = new int[MAXSIZE];
 		this->index = new int[MAXSIZE];
+		this->size = 0;
+		this->slot = new Elem *[MAXSIZE];
 		this->counter = 0;
 		for (int i = 0; i < MAXSIZE; i++)
 		{
@@ -428,10 +428,10 @@ public:
 		delete frequency;
 		delete index;
 	}
-	void replace(int index, Elem *e)
+	void replace(int index, Elem *elem)
 	{
 		visit(index);
-		slot[index] = e;
+		slot[index] = elem;
 	}
 	void visit(int index)
 	{
@@ -439,36 +439,36 @@ public:
 		this->index[index] = counter + 1;
 		this->counter++;
 	}
-	Elem *insert(Elem *e, int index)
+	Elem *insert(Elem *elem, int index)
 	{
 		if (full())
 		{
 			Elem *ret;
-			int removeIndex = this->remove();
-			ret = this->slot[removeIndex];
-			slot[removeIndex] = this->slot[this->size - 1];
-			frequency[removeIndex] = this->frequency[this->size - 1];
+			int removeIndex = remove();
+			ret = slot[removeIndex];
+			slot[removeIndex] = slot[size - 1];
+			frequency[removeIndex] = frequency[size - 1];
 			--size;
 			downHeap(removeIndex);
 			++size;
-			replace(this->size - 1, e);
-			frequency[this->size - 1] = 1;
+			replace(size - 1, elem);
+			frequency[size - 1] = 1;
 			upHeap(size - 1);
 			return ret;
 		}
 		else
 		{
-			replace(this->size, e);
+			replace(size, elem);
 			size++;
-			upHeap(this->size - 1);
+			upHeap(size - 1);
 		}
 		return NULL;
 	}
 
-	void visit(Elem *e)
+	void visit(Elem *elem)
 	{
 		for (int i = 0; i < this->size; i++)
-			if (this->slot[i]->addr == e->addr)
+			if (this->slot[i]->addr == elem->addr)
 			{
 				visit(i);
 				downHeap(i);
