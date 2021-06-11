@@ -10,6 +10,15 @@ Cache::~Cache()
     delete rp;
     delete s_engine;
 }
+void Cache::printRP()
+{
+    rp->print();
+}
+void Cache::printSE()
+{
+    s_engine->print();
+}
+
 Data *Cache::read(int addr)
 {
     return rp->read(addr);
@@ -18,7 +27,7 @@ Elem *Cache::put(int addr, Data *cont)
 {
 
     Elem *retValue = rp->put(addr, cont);
-    if (retValue != NULL)
+    if (retValue)
         this->s_engine->deleteNode(retValue->addr);
     this->s_engine->insert(new Elem(addr, cont, true), 0);
     return retValue;
@@ -35,17 +44,9 @@ Elem *Cache::write(int addr, Data *cont)
     }
     else
     {
-        if (retValue != NULL)
-            this->s_engine->deleteNode(retValue->addr);
-        this->s_engine->insert(newElem, 0);
+        if (retValue)
+            s_engine->deleteNode(retValue->addr);
+        s_engine->insert(newElem, 0);
     }
     return retValue;
-}
-void Cache::printRP()
-{
-    rp->print();
-}
-void Cache::printSE()
-{
-    s_engine->print();
 }

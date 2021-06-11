@@ -26,10 +26,6 @@ int height(Node *N)
 	return N->height;
 }
 
-int max(int a, int b)
-{
-	return (a > b) ? a : b;
-}
 
 Node *rightRotate(Node *y)
 {
@@ -74,6 +70,12 @@ int getBalanceFactor(Node *N)
 	return height(N->left) - height(N->right);
 }
 
+
+
+int max(int a, int b){
+	if (a>=b) return a;
+	else return b;
+}
 Node *insertNode(Node *node, Elem *data)
 {
 
@@ -229,8 +231,8 @@ public:
 		{
 			if (this->slot[i]->addr == addr)
 			{
-				this->slot[i]->data = cont;
-				this->slot[i]->sync = false;
+				slot[i]->data = cont;
+				slot[i]->sync = false;
 				duplicated = true;
 				found = true;
 				break;
@@ -392,7 +394,8 @@ public:
 class LRU : public MRU
 {
 public:
-	int remove() override
+	int remove() 
+	override
 	{
 		int minCount = 0;
 		for (int i = 1; i < MAXSIZE; i++)
@@ -423,6 +426,7 @@ public:
 			frequency[i] = 0;
 		}
 	}
+	
 	~LFU()
 	{
 		delete frequency;
@@ -475,10 +479,7 @@ public:
 				break;
 			}
 	}
-	int remove()
-	{
-		return 0;
-	}
+	
 	void print()
 	{
 
@@ -488,6 +489,46 @@ public:
 			this->slot[i++]->print();
 		}
 	}
+	
+	int remove()
+	{
+		return 0;
+	}
+	void upHeap(int index)
+	{
+		int item = frequency[index];
+		Elem *_elem = this->slot[index];
+		int i = index;
+		int freq;
+		Elem *temp;
+		int leftChild = (i % 2 == 0) ? (i / 2 - 1) : i / 2;
+		bool check = false;
+		while (leftChild >= 0)
+		{
+			freq = frequency[leftChild];
+			temp = this->slot[leftChild];
+			if (item >= freq)
+			{
+				frequency[i] = item;
+				this->slot[i] = _elem;
+				check = true;
+				break;
+			}
+			else
+			{
+				frequency[i] = freq;
+				this->slot[i] = temp;
+				i = leftChild;
+			}
+			leftChild = (i % 2 == 0) ? (i / 2 - 1) : i / 2;
+		}
+		if (!check)
+		{
+			frequency[i] = item;
+			this->slot[i] = _elem;
+		}
+	}
+
 	void downHeap(int index)
 	{
 		int item = frequency[index];
@@ -529,40 +570,7 @@ public:
 			this->slot[i] = _elem;
 		}
 	}
-	void upHeap(int index)
-	{
-		int item = frequency[index];
-		Elem *_elem = this->slot[index];
-		int i = index;
-		int freq;
-		Elem *temp;
-		int leftChild = (i % 2 == 0) ? (i / 2 - 1) : i / 2;
-		bool check = false;
-		while (leftChild >= 0)
-		{
-			freq = frequency[leftChild];
-			temp = this->slot[leftChild];
-			if (item >= freq)
-			{
-				frequency[i] = item;
-				this->slot[i] = _elem;
-				check = true;
-				break;
-			}
-			else
-			{
-				frequency[i] = freq;
-				this->slot[i] = temp;
-				i = leftChild;
-			}
-			leftChild = (i % 2 == 0) ? (i / 2 - 1) : i / 2;
-		}
-		if (!check)
-		{
-			frequency[i] = item;
-			this->slot[i] = _elem;
-		}
-	}
+
 };
 
 class SearchEngine
